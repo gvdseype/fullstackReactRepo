@@ -1,50 +1,32 @@
-const Header = (title) => {
-  <h1>{title}</h1>
-}
-
-const Part = (part, exercise) => {
-  return () => {
-    <p>
-      {part} {exercise}
-    </p>
-  }
-  
-}
-
-const Content = (course) => {
-  course.course.parts.forEach(element => {
-    return <Part part={element.name} exercise={element.exercises}/>
-  })
-}
-
-const Total = (first, second, third) => {
-  <p>Number of exercises {first + second + third}</p>
-}
+import { useState } from 'react'
 
 const App = () => {
-  const course = {
-    name: 'Half Stack application development',
-    parts: [
-      {
-        name: 'Fundamentals of React',
-        exercises: 10
-      },
-      {
-        name: 'Using props to pass data',
-        exercises: 7
-      },
-      {
-        name: 'State of a component',
-        exercises: 14
-      }
-    ]
+  const [clicks, setClicks] = useState({
+    left: 0, right: 0
+  })
+
+  const handleLeftClick = () => {
+    const newClicks = { 
+      left: clicks.left + 1, 
+      right: clicks.right 
+    }
+    setClicks(newClicks)
+  }
+
+  const handleRightClick = () => {
+    const newClicks = { 
+      left: clicks.left, 
+      right: clicks.right + 1 
+    }
+    setClicks(newClicks)
   }
 
   return (
     <div>
-      <Header course={course.name}/>
-      <Content course={course}/>
-      <Total first={course.parts[0].exercises} second={course.parts[1].exercises} third={course.parts[2].exercises} />
+      {clicks.left}
+      <button onClick={handleLeftClick}>left</button>
+      <button onClick={handleRightClick}>right</button>
+      {clicks.right}
     </div>
   )
 }
