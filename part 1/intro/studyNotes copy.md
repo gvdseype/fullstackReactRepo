@@ -339,6 +339,8 @@ const handleRightClick = () =>
   setClicks({ ...clicks, right: clicks.right + 1 })
 ```
 
+------
+
 ### Mutating state directly
 
 It is forbidden in React to mutate the state directly, it can result in unexpected side effects. Changing state has always be done by setting the state to a new object. If properties from the previous state object are not changed, they need to simply be copied, which is done by copying those properties into a new object, and setting that as the new state. 
@@ -353,3 +355,146 @@ const handleLeftClick = () => {
 ```
 
 Although it works just as fine. 
+
+------
+
+### Handling arrays
+
+We can use an array `allClicks` to remember every click that has occurred in the application.
+
+```react
+const App = () => {
+  const [left, setLeft] = useState(0)
+  const [right, setRight] = useState(0)
+  const [allClicks, setAll] = useState([])
+
+  const handleLeftClick = () => {
+    setAll(allClicks.concat('L'))
+    setLeft(left + 1)
+  }
+
+  const handleRightClick = () => {
+    setAll(allClicks.concat('R'))
+    setRight(right + 1)
+  }
+
+  return (
+    <div>
+      {left}
+      <button onClick={handleLeftClick}>left</button>
+      <button onClick={handleRightClick}>right</button>
+      {right}
+      <p>{allClicks.join(' ')}</p>
+    </div>
+  )
+}
+```
+
+`useState` for `allClicks` is set to an empty array. When a button is clicked, an item is added to the array by using the `concat` method, which does not mutate the existing but rater returns a new copy of the array with the item added to it. We could use the `push` method to achieve the same, but this would mutate the array which is something we want to avoid. 
+
+Lastly, we call the `join` method on the `allClicks` array that joins all the items into a single string. 
+
+### Conditional rendering
+
+```react
+const History = (props) => {
+  if (props.allClicks.length === 0) {
+    return (
+      <div>
+        the app is used by pressing the buttons
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      button press history: {props.allClicks.join(' ')}
+    </div>
+  )
+}
+```
+
+The *History* compontent renders completey different React elements depending on the state of the application. This is called conditional rendering. 
+
+### Rule of Hook
+
+![Dustin Hoffman as Captain Hook | Peter and the starcatcher, Captain hook,  James hook](https://i.pinimg.com/originals/a2/6e/82/a26e8207bc2515d085cae6aa4a4b4a8e.jpg)
+
+Hooks shouldn't be called from inside of a loop, a conditional expression, or any place that is not a function defining a component. This must be done to ensure that the hooks are alwyas called in the same order, and if this isn't the case the application could behave erratically. Hooks may only be called from the inside of a function body that defines a React component:
+
+```react
+const App = () => {
+  // these are ok
+  const [age, setAge] = useState(0)
+  const [name, setName] = useState('Juha Tauriainen')
+
+  if ( age > 10 ) {
+    // this does not work!
+    const [foobar, setFoobar] = useState(null)
+  }
+
+  for ( let i = 0; i < age; i++ ) {
+    // also this is not good
+    const [rightWay, setRightWay] = useState(false)
+  }
+
+  const notGood = () => {
+    // and this is also illegal
+    const [x, setX] = useState(-1000)
+  }
+
+  return (
+    //...
+  )
+}
+```
+
+### Rule of Component
+
+Do not define components within components.
+
+```react
+const App = () => {
+  const [value, setValue] = useState(10)
+
+  const setToValue = newValue => {
+    console.log('value now', newValue)
+    setValue(newValue)
+  }
+
+  // Do not define components inside another component
+  const Display = props => <div>{props.value}</div>
+
+  return (
+    <div>
+      <Display value={value} />
+      <Button handleClick={() => setToValue(1000)} text="thousand" />
+      <Button handleClick={() => setToValue(0)} text="reset" />
+      <Button handleClick={() => setToValue(value + 1)} text="increment" />
+    </div>
+  )
+}
+```
+
+The application could still work, but there is no benefit in doing it and may lead to many unpleasant problems. The biggest issue stems from React treating a component defined inside of another component as a new component in every render. This makes it impossible for React to optimize the component.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
