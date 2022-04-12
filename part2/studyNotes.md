@@ -238,3 +238,215 @@ We can add functionality that enables users to toggle the `showAll` state of the
 </div>
 ```
 
+### Setting up a server
+
+There is a tool called JSON server that can act as a server. To install the server globally:
+
+```
+npm install -g json-server
+```
+
+From the root directory of the app, we can run the json-server using:
+
+```
+npx json-server --port 3001 --watch db.json
+```
+
+You can then navigate to `http://localhost:3001/notes` in the browser.
+
+### Asynchronous requests
+
+By registring an event handler to a `XHR` object representing an HTTP request, the JavaScript within the event handler will be called whenever the event is triggered. Therefore, the code does not execute synchronously 'from top to bottom', but does so asynchronously. JavaScript calls the event handler that was registered for the request at some point. 
+
+JavaScript engines follow the asynchronous model, this requires all IO-operations (with some exceptions) to be executed as non-blocking. This means that code execution continues immediately after calling an IO function, without waiting for it to return. 
+
+### Axios
+
+The axios library works like fetch and can be installed via node packet manager, like this:
+
+```
+npm install axios
+```
+
+**`npm`** commands should always be run in the project root directory, which is where the package.json file can be found. This command will install Axios as one of the dependencies found in package.json. In addition, the command also downloaded the library code, which can be found in `node_modules` directory in the root. 
+
+We can install `json-server` as a development dependency by executing the command:
+
+```
+npm install json-server --save-dev
+```
+
+and making a small addition to the scripts part of the package.json file:
+
+```
+{
+  // ... 
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "server": "json-server -p3001 --watch db.json"
+  },
+}
+```
+
+After this, we can now start the json-server from the project root directory with the command:
+
+```
+npm run server
+```
+
+#### The difference between axios and json-server
+
+```js
+npm install axios
+npm install json-server --save-dev
+```
+
+* Axios is installed as a runtime dependency of the application, because the execution of the program requires the existence of the library.
+* Json-server was installed as a development dependency, since the program itself doesn't require it. It is used during software development. 
+
+#### Axios and promises
+
+To run json-server and your react simultaneously, you may need to use two terminal windows. One to keep json-server running and the other to run react-app. 
+
+The library can be brought into use by the `import` statement:
+
+```
+import axios from 'axios'
+
+const promise = axios.get('http://localhost:3001/notes')
+console.log(promise)
+
+const promise2 = axios.get('http://localhost:3001/foobar')
+console.log(promise2)
+```
+
+![fullstack content](https://fullstackopen.com/static/823a2e7f414c99cb849a42470e4f372d/5a190/16b.png)
+
+When the content of the file `index.js` changes, React does not always notice that automatically. We need to refresh the browser to see the changes. To make React notice the changes automatically, we can create a file named `.env` in the root directory of the project and add the line 
+
+```
+FAST_REFRESH=false
+```
+
+After which we need to restart the app for the applied changes to take effect. 
+
+#### `get` method
+
+Axios' method `get` returns a promise. 
+
+*A Promise is an object representing the eventual completion or failure of an asynchronous operation*
+
+In other words, a promise is an object that represents an asynchronous operation. A promise can have 3 different states:
+
+1. The promise is *pending* : it means that the final value (one of the following two) is not available.
+2. The promise is *fulfilled*: it means that the operation has been completed and the final value is available, which generally is a successful operation. This state is sometimes called `resolved`.
+3. The promise is rejected: it means that an error prevented the final value from being determined, which generally represents a failed operation.
+
+#### `then` method
+
+If we want to access the result of the operation represented by the promise, we must register an event handler to the promise. This can be done with `then`:
+
+```javascript
+const promise = axios.get('http://localhost:3001/notes')
+
+promise.then(response => {
+  console.log(response)
+})
+```
+
+The JavaScript runtime environment calls the callback function registed by the `then` method providing it with a `response` object as a parameter. The `response` object contains all the essential data related to the response of an HTTP GET request. This would include the returned *data*, *status code*, *headers*. 
+
+Storing the promise object in a variable is unnecessary and it is more common to chain the `then` method to call the axios method, so that it follows it directly:
+
+```javascript
+axios
+  .get('http://localhost:3001/notes')
+  .then(response => {
+    const notes = response.data
+    console.log(notes)
+  })
+```
+
+The data returned by the server is plain text, one long string.
+
+The axios library is still able to parse the data into a JavaScript array, since the server has specified that the data format is `application/json; charset=utf-8` using the `content-type` header. 
+
+```javascript
+import ReactDOM from 'react-dom'
+import App from './App'
+
+import axios from 'axios'
+
+axios.get('http://localhost:3001/notes').then(response => {
+  const notes = response.data
+  ReactDOM.render(
+    <App notes={notes} />,
+    document.getElementById('root')
+  )
+})
+```
+
+We can move the fetching of the data into the `App` component. 
+
+### Effect-Hooks
+
+*The effect hook lets you perform side effects on function components. Data fetching, setting up a subscription, manually changing the DOM in React components are all examples of side effects.*
+
+```javascript
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import Note from './components/Note'
+
+const App = () => {
+  const [notes, setNotes] = useState([])
+  const [newNote, setNewNote] = useState('')
+  const [showAll, setShowAll] = useState(true)
+
+  useEffect(() => {
+    console.log('effect')
+    axios
+      .get('http://localhost:3001/notes')
+      .then(response => {
+        console.log('promise fulfilled')
+        setNotes(response.data)
+      })
+  }, [])
+  console.log('render', notes.length, 'notes')
+
+  // ...
+}
+```
+
+The use effect hook takes two parameters:
+
+```javascript
+const hook = () => {
+  console.log('effect')
+  axios
+    .get('http://localhost:3001/notes')
+    .then(response => {
+      console.log('promise fulfilled')
+      setNotes(response.data)
+    })
+}
+
+useEffect(hook, [])
+```
+
+1. The function or the effect itself. The effects run after every completed render, but you can choose to fire it only when certain values have changed.
+2. The second parameter of `useEffect` is used to specify how often the effect is run. If the second parameter is an empty array, then the effect is only run along the first render of the component. 
+
+### Structure
+
+![fullstack content](https://fullstackopen.com/static/0e3766361ce9d08f0c4fdd39152cf493/5a190/18e.png)
+
+- The real app gets the JavaScript from React dev server (runs with the command `npm start`)
+
+  The dev-server transforms the JavaScript into a format understood by the browser. Among other things, it stitches together JavaScript from different files into on file. 
+
+- The react app fetches the JSON formatted data from the json-server running on port 3001. 
+
+  
