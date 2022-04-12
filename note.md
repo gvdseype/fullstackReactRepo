@@ -50,3 +50,42 @@ In some situations you may also have to run the command below from the root of t
 rm -rf node_modules/ && npm i
 ```
 
+### Controlled component
+
+```javascript
+import logo from './logo.svg';
+import './App.css';
+import { useState } from 'react'
+
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes)
+  const [newNote, setNewNote] = useState(props.notes)
+  
+  const handleNoteChange = (event) => {
+    console.log(event.target.value)
+    setNewNote(event.target.value)
+  }
+  
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notes.map(note => 
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      <form onSubmit={addNote}>
+          <input value={newNote}/>
+            onChange=handelNoteChange
+          <button type='submit'>save</button>
+      </form>
+    </div>
+  );
+}
+
+export default App;
+```
+
+Here we have an event handler that synchronizes the changes made to the input with the component's state through the `handleNoteChange` which leverage the `setNewNote` function. 
+
+The `onChange` attribute of the form's `input` element allows an event handler to be registered every time something is inputted in the input field. 

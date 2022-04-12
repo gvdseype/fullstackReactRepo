@@ -1,3 +1,5 @@
+[TOC]
+
 ### Key-attribute
 
 ```javascript
@@ -135,3 +137,104 @@ const App = (props) => {
     </div>
   )
 }
+```
+
+### Controlled component
+
+A controlled component helps you access the data that is contained in the forms `input` element
+
+```javascript
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes)
+  const [newNote, setNewNote] = useState(
+    'a new note...'
+  ) 
+
+  // ...
+
+  const handleNoteChange = (event) => {
+    console.log(event.target.value)
+    setNewNote(event.target.value)
+  }
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notes.map(note => 
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      <form onSubmit={addNote}>
+        <input
+          value={newNote}
+          onChange={handleNoteChange}
+        />
+        <button type="submit">save</button>
+      </form>   
+    </div>
+  )
+}
+```
+
+Adding a new note through an event handler could be done like this:
+
+```javascript
+const addNote = (event) => {
+    event.preventDefault();
+    const noteObject = {
+      content: newNote,
+      date: new Date().toISOString(),
+      important: Math.random() < 0.5,
+      id: notes.length + 1,
+    }
+    setNotes(notes.concat(noteObject))
+    setNewNote('')
+  }
+```
+
+The event handler also resets the value of the controlled input element by calling the `setNewNote` function of the `newNote` state. 
+
+### Filtering Displayed Elements
+
+Keeping track of which notes should be displayed can be managed by a piece of state that we can add to the `App` component. 
+
+```javascript
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes)
+  const [newNote, setNewNote] = useState('') 
+  const [showAll, setShowAll] = useState(true)
+
+  // ...
+
+  const notesToShow = showAll
+    ? notes
+    : notes.filter(note => note.important === true)
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notesToShow.map(note =>
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      // ...
+    </div>
+  )
+}
+
+```
+
+The definition of the `notesToShow` variable uses a conditional statement. If the value of `showAll` is false, the variable `notesToShow` will only return the notes that are important (`true`), but if `showAll` is true, it will the unfiltered `notes` state. 
+
+We can add functionality that enables users to toggle the `showAll` state of the application from the user interface:
+
+```javascript
+<div>
+ <button onClick={() => setShowAll(!showAll)}>
+   show {showAll ? 'important' : 'all' }
+ </button>
+</div>
+```
+

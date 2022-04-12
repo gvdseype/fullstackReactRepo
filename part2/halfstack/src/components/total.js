@@ -1,4 +1,3 @@
-import React from 'react'
 
 const ComputeTotal = ({parts}) => {
   let initialValue = 0;
