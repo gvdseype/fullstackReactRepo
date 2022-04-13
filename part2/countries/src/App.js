@@ -8,7 +8,7 @@ import Result from './components/Result.js'
 const App = () => {
   const [countries, setCountries] = useState([])
   const [showCountries, setShowCountries] = useState('')
-  
+
   useEffect(() => {
     axios
       .get('https://restcountries.com/v3.1/all')
@@ -18,6 +18,7 @@ const App = () => {
   }, [])
     
   const handleFilterChange = (event) => {
+    // console.log('current weather', weather)
     setShowCountries(event.target.value)
   }
 

@@ -17,16 +17,14 @@ const Country = ({name, country}) => {
     }
   }
 
-
   let result = <div>
     <li>{name}</li><button onClick={handleShowClick}>{button}</button>
   </div>
   
-  
   return (
     <div>
       {result}
-      {!hidden ? <SingleMatch name={country.name.common} capital={country.capital[0]} area={country.area} languages={country.languages} flags={country.flags}/> : null}
+      {!hidden ? <SingleMatch name={country.name.common} capital={country.capital[0]} area={country.area} languages={country.languages} flags={country.flags} latlng={country.capitalInfo.latlng}/> : null}
     </div>
   )
 }
