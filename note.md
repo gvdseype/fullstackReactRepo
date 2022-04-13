@@ -2,7 +2,7 @@
 
 Version 18 of React was released late March 2022. The code in material should work as it is with the new React version. However, some libraries might not yet be compatible with React 18. At the moment of writing (4th April) at least the Apollo client used in [part 8](https://fullstackopen.com/en/part8) does not yet work with most recent React.
 
-In case you end up in a situation where your application breaks because of library compatibly problems, *downgrade* to the older React by changing the file *pacgage.json* as follows:
+In case you end up in a situation where your application breaks because of library compatibly problems, *downgrade* to the older React by changing the file *package.json* as follows:
 
 ```
 {
@@ -50,42 +50,77 @@ In some situations you may also have to run the command below from the root of t
 rm -rf node_modules/ && npm i
 ```
 
-### Controlled component
 
-```javascript
-import logo from './logo.svg';
-import './App.css';
-import { useState } from 'react'
 
-const App = (props) => {
-  const [notes, setNotes] = useState(props.notes)
-  const [newNote, setNewNote] = useState(props.notes)
-  
-  const handleNoteChange = (event) => {
-    console.log(event.target.value)
-    setNewNote(event.target.value)
-  }
-  
-  return (
-    <div>
-      <h1>Notes</h1>
-      <ul>
-        {notes.map(note => 
-          <Note key={note.id} note={note} />
-        )}
-      </ul>
-      <form onSubmit={addNote}>
-          <input value={newNote}/>
-            onChange=handelNoteChange
-          <button type='submit'>save</button>
-      </form>
-    </div>
-  );
-}
+### Setting up axios server
 
-export default App;
+The axios library works like fetch and can be installed via node packet manager, like this:
+
+```
+npm install axios
 ```
 
-Here we have an event handler that synchronizes the changes made to the input with the component's state through the `handleNoteChange` which leverage the `setNewNote` function. 
+**`npm`** commands should always be run in the project root directory, which is where the package.json file can be found. This command will install Axios as one of the dependencies found in package.json. In addition, the command also downloaded the library code, which can be found in `node_modules` directory in the root. 
 
-The `onChange` attribute of the form's `input` element allows an event handler to be registered every time something is inputted in the input field. 
+We can install `json-server` as a development dependency by executing the command:
+
+```
+npm install json-server --save-dev
+```
+
+and making a small addition to the scripts part of the package.json file:
+
+```
+{
+  // ... 
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "server": "json-server -p3001 --watch db.json"
+  },
+}
+```
+
+After this, we can now start the json-server from the project root directory with the command:
+
+```
+npm run server
+```
+
+#### The difference between axios and json-server
+
+```js
+npm install axios
+npm install json-server --save-dev
+```
+
+* Axios is installed as a runtime dependency of the application, because the execution of the program requires the existence of the library.
+* Json-server was installed as a development dependency, since the program itself doesn't require it. It is used during software development. 
+
+#### Axios and promises
+
+To run json-server and your react simultaneously, you may need to use two terminal windows. One to keep json-server running and the other to run react-app. 
+
+The library can be brought into use by the `import` statement:
+
+```
+import axios from 'axios'
+
+const promise = axios.get('http://localhost:3001/notes')
+console.log(promise)
+
+const promise2 = axios.get('http://localhost:3001/foobar')
+console.log(promise2)
+```
+
+![fullstack content](https://fullstackopen.com/static/823a2e7f414c99cb849a42470e4f372d/5a190/16b.png)
+
+When the content of the file `index.js` changes, React does not always notice that automatically. We need to refresh the browser to see the changes. To make React notice the changes automatically, we can create a file named `.env` in the root directory of the project and add the line 
+
+```
+FAST_REFRESH=false
+```
+
+After which we need to restart the app for the applied changes to take effect.
