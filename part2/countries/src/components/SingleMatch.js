@@ -7,10 +7,11 @@ const SingleMatch = ({name, capital, area, languages, flags, latlng}) => {
   let allLanguages = Object.values(languages)
   let lat = latlng[0]
   let lon = latlng[1]
-  const [temperature, setTemperature] = useState([])
+  let appId = '' // user will need to generate their own appId by following instructions here: https://openweathermap.org/appid
+  const [temperature, setTemperature] = useState('')
   const [wind, setWind] = useState('')
   const [icon, setIcon] = useState('')
-  let url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=0d6b6affa820e54050e3ab698737026e`
+  let url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${appId}`
   let iconUrl = `http://openweathermap.org/img/wn/${icon}@2x.png`
   
   useEffect(() => {

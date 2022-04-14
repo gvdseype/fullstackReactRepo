@@ -449,4 +449,302 @@ useEffect(hook, [])
 
 - The react app fetches the JSON formatted data from the json-server running on port 3001. 
 
-  
+### Sending Data to the Server
+
+Sending data can be done like this:
+
+```javascript
+addNote = event => {
+  event.preventDefault()
+  const noteObject = {
+    content: newNote,
+    date: new Date(),
+    important: Math.random() < 0.5,
+  }
+
+  axios
+    .post('http://localhost:3001/notes', noteObject)
+    .then(response => {
+      console.log(response)
+    })
+}
+```
+
+The new note will not be rendered to the screen yet. This is because we did not update the state of the App component when we created the new note. This can be done by adding the following lines
+
+```javascript
+ axios
+    .post('http://localhost:3001/notes', noteObject)
+    .then(response => {
+      setNotes(notes.concat(response.data))
+      setNewNote('')
+    })
+}
+```
+
+Making a `POST` request within an event handler function works like this:
+
+```javascript
+const toggleImportanceOf = id => {
+  const url = `http://localhost:3001/notes/${id}`
+  const note = notes.find(n => n.id === id)
+  const changedNote = { ...note, important: !note.important }
+
+  axios.put(url, changedNote).then(response => {
+    setNotes(notes.map(note => note.id !== id ? note : response.data))
+  })
+}
+```
+
+Explanation for `const changedNote = { ...note, important: !note.important }`:
+
+`{...note}` creates a new object with copies of all properties from the `note` object. When adding properties inside the curly braces adter the spread object, here `{...note, important: true}`, then the value of the `important` property of the new object will be `true`. In our example the `important` property gets the negation of its previous value in the original object. We made a shallow copy, meaning that the values of the new object are the same as the values of the old object.
+
+This allows us to leave the original intact by not mutating it. 
+
+> **After this we are calling `setNotes` to update the new version of the `notes` array by providing a `map` callback. It will keep any note unchanged that does not have the same `id` as the `note id` we changed, and for the `note` in the `notes array` that does have the same id we replace it with `response.data.`**
+
+```javascript
+notes.map(note => note.id !== id ? note : response.data)
+```
+
+
+
+### Extracting communication with the backend into a seperate module
+
+In the spirit of the `single responsibility principle`, it is wise to extract this communication to its own module. This module will sit in a seperate directory under `src`, called `services`. We add a file called `notes.js` in this directory:
+
+```javascript
+import axios from 'axios'
+const baseUrl = 'http://localhost:3001/notes'
+
+const getAll = () => {
+  return axios.get(baseUrl)
+}
+
+const create = newObject => {
+  return axios.post(baseUrl, newObject)
+}
+
+const update = (id, newObject) => {
+  return axios.put(`${baseUrl}/${id}`, newObject)
+}
+
+export default { 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+
+The module returns an object that has three functions, as its properties that deal with notes. The function directly returns the promises returned by the axios methods. 
+
+We can import this module from the `App` component:
+
+```javascript
+import noteService from './services/notes'
+
+const App = () => {
+```
+
+The functions of the module can be used directly with the imported variable `noteService` as follows:
+
+```javascript
+const App = () => {
+  // ...
+
+  useEffect(() => {
+    noteService
+      .getAll()
+      .then(response => {
+        setNotes(response.data)
+      })
+  }, [])
+
+	const toggleImportanceOf = id => {
+  const note = notes.find(n => n.id === id)
+  const changedNote = { ...note, important: !note.important }
+
+  noteService
+    .update(id, changedNote)
+    .then(response => {
+    	setNotes(notes.map(note => note.id !== id ? note : response.data))
+  	})
+  }
+
+  const addNote = (event) => {
+    event.preventDefault()
+    const noteObject = {
+      content: newNote,
+      date: new Date().toISOString(),
+      important: Math.random() > 0.5
+    }
+
+    noteService
+      .create(noteObject)
+      .then(response => {
+      setNotes(notes.concat(response.data))
+      setNewNote('')
+    })
+  }
+
+  // ...
+}
+
+export default App
+```
+
+The module would be much nicer to use if, instead of the entire HTTP response, we would only get the response data. Using the module would then look like this:
+
+```javascript
+noteService
+  .getAll()
+  .then(initialNotes => {
+    setNotes(initialNotes)
+  })
+```
+
+To be able to use this code, we need to change things in the module:
+
+```javascript
+import axios from 'axios'
+const baseUrl = 'http://localhost:3001/notes'
+
+const getAll = () => {
+  const request = axios.get(baseUrl)
+  return request.then(response => response.data)
+}
+
+const create = newObject => {
+  const request = axios.post(baseUrl, newObject)
+  return request.then(response => response.data)
+}
+
+const update = (id, newObject) => {
+  const request = axios.put(`${baseUrl}/${id}`, newObject)
+  return request.then(response => response.data)
+}
+
+export default { 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+
+We no longer return the promise returned by axios directly, instead we assign the promise to the `request` variable and call its `then` method:
+
+```javascript
+const getAll = () => {
+  const request = axios.get(baseUrl)
+  return request.then(response => response.data)
+}
+```
+
+After defining the parameter of the `then` method to directly return `response.data`, we have gotten the `getAll` function to work like we wanted it to. When the HTTP request is successful, the promise returns the data sent back in the response from the backend. 
+
+This means we have to update the `App` component to work with the changes we made in the module. Specifically, we need to fix the callback function given as parameter to the `noteService` method, so that they use the directly returned `response.data`. 
+
+```javascript
+  useEffect(() => {
+    noteService
+      .getAll()
+      .then(initialNotes => {
+        setNotes(initialNotes)
+      })
+  }, [])
+```
+
+```javascript
+ noteService
+      .update(id, changedNote)
+      .then(returnedNote => {
+        setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+      })
+```
+
+```javascript
+noteService
+      .create(noteObject)
+      .then(returnedNote => {
+        setNotes(notes.concat(returnedNote))
+        setNewNote('')
+      })
+```
+
+In the first function we just set the notes to our `initialNotes`. In the second function we update the `setNotes` by replacing it with the mapped version of the `notes` array. The third function we add a new note by setting a copy of the `notes` array and pushing the new note via the `concat` method. 
+
+### Clearer syntax for defining object literals
+
+The module defining note related services currently exports an object with the properties `getAll`, `create` and `update` that are assigned to functions for handling notes. 
+
+Instead of exporting this
+
+```javascript
+export default { 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+
+We can export a more compact syntax
+
+```javascript
+export default { 
+  getAll, 
+  create, 
+  update 
+}
+```
+
+Or simply `export default { getAll, create, update }`
+
+### Promises and Errors
+
+The rejection of a promise is handled by providing the `then` method with a second callback function, which is called in the situation where the promise is rejected.
+
+The common way to handle rejected promises is to use the catch method:
+
+```javascript
+axios
+  .get('http://example.com/probably_will_fail')
+  .then(response => {
+    console.log('success!')
+  })
+  .catch(error => {
+    console.log('fail')
+  })
+```
+
+We can also create a promise chain:
+
+```javascript
+axios
+  .put(`${baseUrl}/${id}`, newObject)
+  .then(response => response.data)
+  .then(changedNote => {
+    // ...
+  })
+```
+
+We can add a feature and register an error handler in the `App` component:
+
+```javascript
+const toggleImportanceOf = id => {
+  const note = notes.find(n => n.id === id)
+  const changedNote = { ...note, important: !note.important }
+
+  noteService
+    .update(id, changedNote).then(returnedNote => {
+      setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+    })
+    .catch(error => {
+      alert(
+        `the note '${note.content}' was already deleted from server`
+      )
+      setNotes(notes.filter(n => n.id !== id))
+    })
+}
+```
+

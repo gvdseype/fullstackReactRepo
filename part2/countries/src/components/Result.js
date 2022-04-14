@@ -4,7 +4,6 @@ import SingleMatch from './SingleMatch.js'
 const Result = ({countries, showCountries, setShowCountries}) => {
   let selectedCountries = countries.filter(country => country.name.common.slice(0, showCountries.length) === showCountries)
   let result;
-  // console.log(countries[0].capitalInfo.latlng);
   
   const provideSingleMatch = (tempCountry) => {
     return (
