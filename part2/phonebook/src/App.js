@@ -4,24 +4,22 @@ import axios from 'axios'
 import Name from './components/Name.js'
 import Input from './components/Input.js'
 import Header from './components/Header.js'
-
+import contactServices from './services/contacts.js'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [showAll, setShowAll] = useState('')
-
+  
   useEffect(() => {
-    console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        console.log('promise fulfilled')
-        setPersons(response.data)
+    contactServices
+      .getAll()
+      .then(contacts => {
+        setPersons(contacts)
+        // console.log('from getAll', contacts)
       })
   }, [])
-  console.log('render', persons.length, 'notes')
 
   const addName = (event) => {
     event.preventDefault()
@@ -29,17 +27,48 @@ const App = () => {
     let arrayResult = persons.filter(element => element.name === newName)
     
     if (arrayResult.length > 0) {
-      window.alert(`${newName} is already added to phonebook`)
+      let result = window.confirm(`${newName} is already added to phonebook, replace old number with new one?`)
+      let id = arrayResult[0].id
+      if (result) {
+        console.log(arrayResult[0].id)
+        const newPerson = {
+          name: newName,
+          number: newNumber,
+        }
+        contactServices
+        .update(id, newPerson)
+        .then(returnedContact => {
+          console.log('returnedConct', returnedContact)
+          let newArray = persons.map(contact => contact.id === id ? newPerson : contact)
+          setPersons(newArray)
+        })
+      }
     } else {
       const newPerson = {
         name: newName,
         number: newNumber,
       }
-      setPersons(persons.concat(newPerson))
-      setNewName('')
-      setNewNumber('')
+      contactServices
+        .create(newPerson)
+        .then(returnedContact => {
+          setPersons(persons.concat(returnedContact))
+          setNewName('')
+          setNewNumber('')
+        })
     }    
-  } 
+  }
+
+  const handleDeleteContact = (id) => {
+    const result = window.confirm('Are you sure you want to delete this contact?');
+    if (result) {
+      contactServices
+        .deleteContact(id)
+        .then(emptyArray => {
+          let updatedPersons = persons.filter(contact => contact.id !== id)
+          setPersons(updatedPersons)
+        }) 
+    }
+  }
 
   const handleNameChange = (event) => {
     setNewName(event.target.value)
@@ -71,9 +100,12 @@ const App = () => {
       <Header title={'Numbers'}/>
       <div>
         <ul>
-          {console.log(contactsToShow)}
           {contactsToShow.map(contact =>
-            <Name key={contact.name} name={contact.name} number={contact.number}/>
+            <div>
+              <Name key={contact.id} name={contact.name} number={contact.number} id={contact.id}/>
+              <button key={contact.name} onClick={() => handleDeleteContact(contact.id)}>delete</button>
+            </div>
+            
           )}
         </ul>
       </div>

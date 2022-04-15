@@ -6,13 +6,12 @@ import reportWebVitals from './reportWebVitals';
 import axios from 'axios'
 
 
-axios.get('http://localhost:3001/persons').then(response => {
-  const persons = response.data
-  ReactDOM.render(
-      <App persons={persons}/>,
-      document.getElementById('root')
-  )
-})
+
+ReactDOM.render(
+    <App />,
+    document.getElementById('root')
+)
+
 
 
 // If you want to start measuring performance in your app, pass a function

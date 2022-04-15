@@ -1,7 +1,9 @@
-const Name = ({name, number}) => {
 
+const Name = ({name, number}) => {
   return (
-    <li>{name} {number}</li>
+    <div>
+      <li>{name} {number}</li>
+    </div>
   )
 }
 
